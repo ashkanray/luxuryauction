@@ -1,0 +1,19 @@
+# version: "3.9"
+
+# services:
+#   # API gateway
+#   gateway:
+#     build:
+#       context: ./api-gateway
+#     restart: always
+#     container_name: "gateway-server"
+#     ports:
+#       - 3500:3500  # Map container port 3500 to host port 3500
+#     depends_on:
+#       - web-app-server
+#       - mysql-notifications
+
+#   # notifications microservice MYSQL db
+#   mysql-accounts:
+#     image
+#     restart
