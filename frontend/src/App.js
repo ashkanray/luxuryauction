@@ -11,6 +11,9 @@ import RegisterPage from "./components/Register";
 // user page imports
 import UserHomePage from "./components/UserHomepage";
 import CreateItemAuction from "./components/CreateItemAuction";
+import CheckoutPage from "./components/CheckoutPage";
+import CustomerSupport from "./components/CustomerSupport";
+import UserProfilePage from "./components/UserProfile";
 // admin page imports
 import AdminHomePage from "./components/AdminHomepage";
 import AdminAuctionPage from "./components/AdminAuctions";
@@ -21,9 +24,10 @@ import Bidding from "./components/Bidding";
 
 const AppRouter = () => {
   // state for if user is logged in or not
-  const [userLoggedIn, setLoggedIn] = React.useState(false);
+  const [userLoggedIn, setLoggedIn] = React.useState(
+    () => sessionStorage.getItem("userId") != null
+  );
   const [isAdmin, setAdminState] = React.useState(false);
-  const [isSuspended, setSuspendedState] = React.useState(false);
 
   // handler for logged in or registered users
   function SetLogin() {
@@ -35,11 +39,6 @@ const AppRouter = () => {
     setAdminState(true);
   }
 
-  // handler for suspended state
-  function SetSuspended() {
-    setSuspendedState(!isSuspended);
-  }
-
   return (
     <Router>
       <Routes>
@@ -48,7 +47,6 @@ const AppRouter = () => {
           path="/"
           element={
             <LoginPage
-              onSuspendedUser={SetSuspended}
               onLoginClick={SetLogin}
               onAdminLogin={SetAdmin}
             />
@@ -58,7 +56,6 @@ const AppRouter = () => {
           path="/login"
           element={
             <LoginPage
-              onSuspendedUser={SetSuspended}
               onLoginClick={SetLogin}
               onAdminLogin={SetAdmin}
             />
@@ -72,7 +69,7 @@ const AppRouter = () => {
                 path="/login"
                 element={
                   <LoginPage
-                    onSuspendedUser={SetSuspended}
+                    // onSuspendedUser={SetSuspended}
                     onLoginClick={SetLogin}
                     onAdminLogin={SetAdmin}
                   />
@@ -104,6 +101,13 @@ const AppRouter = () => {
 
               {/* Link item ID into URL */}
               <Route path="/user/bid/:item_id" element={<Bidding />} />
+              <Route path="/user/checkout" element={<CheckoutPage />} />
+
+              {/* Customer support page to leave feedback*/}
+              <Route path="/user/support" element={<CustomerSupport />} />
+
+              {/* User profile page to manage account */}
+              <Route path="/user/profile" element={<UserProfilePage />} />
             </>
           ) : (
             <>

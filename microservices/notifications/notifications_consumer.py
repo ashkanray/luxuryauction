@@ -27,6 +27,9 @@ queue_name = result.method.queue
 routing_pattern = "*.notifications.*"
 channel.queue_bind(exchange='timepiece-traders', queue=queue_name, routing_key=routing_pattern)
 
+
+
+
 # define a function to be called when this consumer finds a message matching its routing pattern
 def callback(ch, method, properties, body):
     # try decoding the message
@@ -50,28 +53,89 @@ def callback(ch, method, properties, body):
 
     # the topics that I'm listening to
     if notification_type == "auction_end":
-        pass
+        # needed info:
+            # recipient emails (either list of many/one emails or string of one email)
+            # auction name
+        post_to_endpoints("auction_end", message)
+
 
     elif notification_type == "one_hour":
-        pass
+        # needed info:
+            # recipient emails (either list of many/one emails or string of one email)
+            # auction name
+        post_to_endpoints("one_hour", message)
+
 
     elif notification_type == "one_day":
-        pass
+        # needed info:
+            # recipient emails (either list of many/one emails or string of one email)
+            # auction name
+        post_to_endpoints("one_day", message)
+
 
     elif notification_type == "winning_bid":
-        pass
+        # needed info:
+            # recipient emails (either list of many/one emails or string of one email)
+            # auction name
+        post_to_endpoints("winning_bid", message)
+
 
     elif notification_type == "watchlist":
-        pass
+        # needed info:
+            # recipient emails (either list of many/one emails or string of one email)
+            # item name (or the auction name, doesnt matter, just lmk)
+        post_to_endpoints("watchlist", message)
     
+
     elif notification_type == "high_bid":
-        pass
+        # needed info:
+            # recipient emails (either list of many/one emails or string of one email)
+            # auction name
+        post_to_endpoints("high_bid", message)
 
 
-    # make API request and print the response
+    elif notification_type == "respond_feedback":
+        # needed info:
+            # recipient emails (either list of many/one emails or string of one email)
+            # subject of the email to send
+            # body info of the email to send
+
+        post_to_endpoints("respond_feedback", message)
+
+    elif notification_type == "update_feedback":
+        # needed info:
+            # feedback id
+
+        post_to_endpoints("update_feedback", message)
+
+
+    elif notification_type == "seller_new_bid":
+
+        post_to_endpoints("seller_new_bid", message)
+            
+
+
+
+
+    # # make API request and print the response
+    # host_ip = socket.gethostbyname('host.docker.internal')
+    # response = requests.get(f"http://{host_ip}:3900/api/accounts/admin/list",)
+    # print(response.text)
+
+# posting to endpoints
+def post_to_endpoints(endpoint, message):
     host_ip = socket.gethostbyname('host.docker.internal')
-    response = requests.get(f"http://{host_ip}:3900/api/accounts/admin/list",)
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    url = f"http://{host_ip}:7777/api/notifications/{endpoint}"
+    # response = requests.post(url, json={"message": message})
+    response = requests.post(url, json=message, headers=headers)
     print(response.text)
+
+
 
 # Set up the consumer with a callback function for when it receives a message
 channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)

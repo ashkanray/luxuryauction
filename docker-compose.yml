@@ -12,6 +12,7 @@ services:
       - mysql-accounts
       - mysql-auctions
       - mysql-items
+      - mysql-feedback
 
   # Accounts microservice MySQL database
   mysql-accounts:
@@ -28,7 +29,7 @@ services:
     volumes:
       - ./microservices/accounts/accounts-data:/var/lib/mysql # persistent data volume
       - ./microservices/accounts/accounts-schema.sql:/docker-entrypoint-initdb.d/schema.sql
-  
+
   # Auctions microservice MySQL database
   mysql-auctions:
     restart: always
@@ -60,7 +61,24 @@ services:
     volumes:
       - ./microservices/items/items-data:/var/lib/mysql
       - ./microservices/items/items-schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
   
+  # MySQL Feedback (Notifications)
+  mysql-feedback:
+    restart: always
+    container_name: "feedback-mysql"
+    image: mysql:latest
+    ports:
+      - 7887:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=mysql
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+    volumes:
+      - ./microservices/notifications/feedback-data:/var/lib/mysql # persistent data volume
+      - ./microservices/notifications/notifications-schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
   # rabbitMq message broker
   rabbitmq-broker:
     container_name: "rabbitmq-broker"
@@ -103,6 +121,24 @@ services:
     depends_on:
       - rabbitmq-broker
 
+  # Bidding consumer service
+  bidding-consumer:
+    container_name: "consumer-bidding"
+    build:
+      context: ./microservices/bidding
+      dockerfile: Dockerfile_bidding
+    depends_on:
+      - rabbitmq-broker
+
+  # Items consumer service
+  items-consumer:
+    container_name: "consumer-items"
+    build:
+      context: ./microservices/items
+      dockerfile: Dockerfile_items
+    depends_on:
+      - rabbitmq-broker
+
   # Redis service
   redis-server:
     image: redis:latest
@@ -118,3 +154,4 @@ volumes:
   auctions-data:
   items-data:
   redis-data:
+  feedback-data:

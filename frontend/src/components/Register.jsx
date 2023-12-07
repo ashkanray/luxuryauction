@@ -13,6 +13,13 @@ function RegisterPage ({onLoginClick, onAdminLogin}) {
         const password = document.querySelector('.password');
         const email = document.querySelector('.email');
 
+        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        // do some email validaton
+        if (!email.value || !emailRegex.test(email.value)) {
+            alert("The email address you entered isn't valid.");
+            return;
+        }
+
         // make API request to check if valid username/password credentials
         const requestParams = {
             method: 'POST',

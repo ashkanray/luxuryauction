@@ -13,9 +13,9 @@ CREATE TABLE IF NOT EXISTS users (
 -- Create favorites table
 CREATE TABLE IF NOT EXISTS watchlist (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  username VARCHAR(50) NOT NULL,
+  api_key VARCHAR(100) NOT NULL,
   email VARCHAR(100) NOT NULL,
-  watchlist_item VARCHAR(100) NOT NULL -- will be a model #
+  watchlist_item VARCHAR(100) NOT NULL -- will be a watch reference #
 );
 
 CREATE TABLE IF NOT EXISTS blocked_users (

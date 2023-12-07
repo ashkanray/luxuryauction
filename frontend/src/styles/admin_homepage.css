@@ -3,6 +3,22 @@
     margin: auto;
     padding: 20px;
   }
+
+  #logout-button {
+    background-color: #007bff; /* Logout button color */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-left: auto;
+    font-family: Arial, sans-serif; /* Set the font explicitly */
+  }
+  
+  #logout-button:hover {
+    background-color: #007bff; /* Logout button color on hover */
+  }
   
   .sections {
     display: flex;

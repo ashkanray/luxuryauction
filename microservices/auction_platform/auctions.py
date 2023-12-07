@@ -34,20 +34,31 @@ def create_auction():
     """
     data = request.get_json()
     user_id = data['user_id']
+    email = data['user_email']
     item_id = data['id']
     item_name = data['item_name']
     start_time = data['auction_start']
     end_time = data['auction_deadline']
 
     # check if got all input
-    if not all([user_id, item_id, item_name, start_time, end_time]):
+    if not all([user_id, email, item_id, item_name, start_time, end_time]):
         return APIResponse("Missing data", 400).to_flask_response()
+
+    # Parse and format the start_time
+    try:
+        if 'T' in start_time:
+            start_time = datetime.strptime(start_time, "%Y-%m-%dT%H:%M")
+        else:
+            start_time = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return APIResponse("Invalid start_time format", 400).to_flask_response()
 
     # insert data into auction mysql database
     with mysql_connection.cursor() as cursor:
-        sql = "INSERT INTO Auctions (user_id, item_id, item_name, start_time, end_time) VALUES (%s, %s, %s, %s, %s)"
+        status = "live" if start_time < datetime.now() else "pending"
+        sql = "INSERT INTO Auctions (user_id, email, item_id, item_name, start_time, end_time, status) VALUES (%s, %s, %s, %s, %s, %s, %s)"
         cursor.execute(
-            sql, (user_id, item_id, item_name, start_time, end_time))
+            sql, (user_id, email, item_id, item_name, start_time.strftime("%Y-%m-%d %H:%M:%S"), end_time, status))
         mysql_connection.commit()
     return APIResponse(f"Successfully Built Auction", 200).to_flask_response()
 
@@ -85,9 +96,17 @@ def get_live_auctions():
         cursor.execute(sql)
         results = cursor.fetchall()
 
-    # convert results to a list of dictionaries for JSON response
-    live_auctions = [dict(zip(cursor.column_names, result))
-                     for result in results]
+    live_auctions = []
+    for result in results:
+        data = {'auction_id': result[0],
+                'seller_id': result[1],
+                'seller_email': result[2],
+                'item_id': result[3],
+                'item_name': result[4],
+                'start_time': result[5],
+                'end_time': result[6],
+                'status': result[7]}
+        live_auctions.append(data)
 
     return APIResponse({"live_auctions": live_auctions}, 200).to_flask_response()
 
@@ -123,18 +142,43 @@ def admin_change_status():
     Change an auction status
     """
     data = request.get_json()
-    admin_id = data['admin_id']
     auction_id = data['auction_id']
     new_status = data['new_status']
 
     # check if got all input
-    if not all([admin_id, auction_id, new_status]):
+    if not all([auction_id, new_status]):
         return APIResponse("Missing data", 400).to_flask_response()
 
     # update auction status in mysql database
     with mysql_connection.cursor() as cursor:
-        sql = "UPDATE Auctions SET status = %s WHERE id = %s"
-        cursor.execute(sql, (new_status, auction_id))
+        if new_status == "live":
+            sql = "UPDATE Auctions SET status = %s, start_time = %s WHERE id = %s"
+        elif new_status == "closed":
+            sql = "UPDATE Auctions SET status = %s, end_time = %s WHERE id = %s"
+        else:
+            pass
+        cursor.execute(sql, (new_status, datetime.now(), auction_id))
+        mysql_connection.commit()
+
+    return APIResponse("Auction status changed", 200).to_flask_response()
+
+
+@app.route('/api/auction/buy_now', methods=['POST'])
+def buy_now_change_status():
+    """
+    Change an auction status
+    """
+    data = request.get_json()
+    item_id = data['id']
+
+    # check if got all input
+    if not all([item_id]):
+        return APIResponse("Missing data", 400).to_flask_response()
+
+    # update auction status in mysql database
+    with mysql_connection.cursor() as cursor:
+        sql = "UPDATE Auctions SET status = %s, end_time = %s WHERE item_id = %s"
+        cursor.execute(sql, ("closed", datetime.now(), item_id))
         mysql_connection.commit()
 
     return APIResponse("Auction status changed", 200).to_flask_response()

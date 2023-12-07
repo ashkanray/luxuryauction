@@ -13,9 +13,11 @@
 7. Acess a browser (chrome) window, access: "http://localhost:3000"
 8. Boo-Yah!
 
+## Presentation Instructions:
+https://www.classes.cs.uchicago.edu/archive/2023/fall/51205-1/FinalTeamPresentations.html
 
-## Project Description
-TBD
+## Project Description (Requirements)
+(https://www.classes.cs.uchicago.edu/archive/2023/fall/51205-1/AuctionSiteRequirements.html)
 
 
 ## Running the Application

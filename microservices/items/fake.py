@@ -3,6 +3,13 @@ import datetime
 import random
 
 
+def convertToBinaryData(filename):
+    # Convert digital data to binary format
+    with open(filename, 'rb') as file:
+        blobData = file.read()
+    return blobData
+
+
 def generate_datetime(start_date):
     random_days = random.randint(1, 30)
     random_hours = random.randint(0, 23)
@@ -208,6 +215,8 @@ starting_bid_amounts = [
     10000
 ]
 
+watch_images = ['./microservices/items/fake-watch-images/watch.jpg']
+
 # add item_condition
 # add starting_price
 # add current bid amount
@@ -221,20 +230,31 @@ conn = mysql.connector.connect(
 )
 
 cursor = conn.cursor()
-
+random_image = [random.randint(1, 3) for _ in range(40)]
 for i in range(40):
     query = """
-    INSERT INTO items (user_id, item_name, description, watch_reference_number, watch_model, watch_year, brand, item_image, auction_won, bid_amount, starting_price, item_condition, auction_start, auction_deadline) 
+    INSERT INTO items (user_id, item_name, description, watch_reference_number, watch_model, watch_year, brand, item_image, auction_won, bid_amount, starting_price, item_condition, auction_start, auction_deadline)
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     values = (user_ids[i], item_names[i], descriptions[i], watch_reference_numbers[i],
-              watch_models[i], watch_years[i], brands[i], None, auction_won[i],
+              watch_models[i], watch_years[i], brands[i], convertToBinaryData(
+                  f'./microservices/items/watch-images/watch{random_image[i]}.jpg'), auction_won[i],
               bid_amounts[i], starting_bid_amounts[i], item_condition[i], auction_start_dates[i], auction_deadline_dates[i])
 
     cursor.execute(query, values)
-
+item_ids = list(range(1, 11))
+random_prices = [random.randint(10000, 100000) for _ in range(10)]
+for i in range(10):
+    query = """
+    INSERT INTO purchases (user_id, item_id, status, purchase_date, purchase_amount)
+    VALUES (%s, %s, %s, %s, %s)
+    """
+    values = (2, item_ids[i], "in-cart",
+              auction_start_dates[i], random_prices[i])
+    cursor.execute(query, values)
 conn.commit()
 cursor.close()
 conn.close()
 
-print(f"Inserted 40 records into the database.")
+print(f"Inserted 40 records into the items database.")
+print(f"Inserted 10 records into the user_purchases database.")

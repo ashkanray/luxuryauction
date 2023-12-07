@@ -27,6 +27,15 @@ function Items({ items, error }) {
             navigate(`/user/bid/${item.id}`);
           }}
         >
+          <img
+            src={
+              item.item_image
+                ? `data:image/jpg;base64,${item.item_image}`
+                : "https://dehayf5mhw1h7.cloudfront.net/wp-content/uploads/sites/1075/2019/03/16192350/No-Photo-Provided.png"
+            }
+            alt={item.name}
+            className="watch-image"
+          />
           <p>Name: {item.item_name}</p>
           <p>Watch Model: {item.watch_model}</p>
         </div>

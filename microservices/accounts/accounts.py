@@ -44,16 +44,15 @@ class Account:
                 if blocked_query["blocked"] == 1:
                     return APIResponse({"error": "This user email address is blocked.", "status": "blocked"}, 401)
 
-            # if user account is suspended
-            if suspended_status == 1:
-                return APIResponse({"error": "This user account is suspended.", "status": "suspended"}, 401)
-
             # encode both passwords and compare
             password_bytes = password.encode('utf-8')
             db_hashed_password_bytes = db_hashed_password.encode('utf-8')
 
             # if password matches hash, must be the correct password and return api token and admin status
             if bcrypt.checkpw(password_bytes, db_hashed_password_bytes):
+                # if user account is suspended
+                if suspended_status == 1:
+                    return APIResponse({"error": "This user account is suspended.", "api_key": api_token, "status": "suspended"}, 200)
                 return APIResponse({"api_key": api_token, "email": email, "admin_status": admin_status, "user_id": user_id, "username": username}, 200)
             else:
                 return APIResponse({"error": "Invalid password."}, 401)
@@ -104,19 +103,16 @@ class Account:
             return APIResponse({"error": "Invalid API token."}, 401)
         
 
-    def suspend_account(self, username, api_key, suspended_status) -> bool:
+    def suspend_account(self, api_key, suspended_status) -> bool:
         """ Function for a user to suspend or un-suspend their own account"""
-        validate, current_username = validate_api_token(api_key)
+        validate, _ = validate_api_token(api_key)
         if validate:
             # check that the account they're trying to suspend or unsuspend is their own
-            if current_username == username:
-                execute_db_query("UPDATE users SET suspended = %s WHERE username = %s", (suspended_status, username), one=True)
-                if suspended_status == 1:
-                    return APIResponse({"status": "suspended"}, 200)
-                if suspended_status == 0:
-                    return APIResponse({"status": "unsuspended"}, 200)
-            else:
-                return APIResponse({"error": "You do not have permission to change the suspended status of this user."}, 401)
+            execute_db_query("UPDATE users SET suspended = %s WHERE api_key = %s", (suspended_status, api_key), one=True)
+            if suspended_status == 1:
+                return APIResponse({"status": "suspended"}, 200)
+            if suspended_status == 0:
+                return APIResponse({"status": "unsuspended"}, 200)
         else:
             return APIResponse({"error": "Invalid API token."}, 401)
     
@@ -129,7 +125,7 @@ class Account:
                 # if updating a users password, need to hash the new password
                 if update_field == "password":
                     update_val = bcrypt.hashpw(update_val.encode('utf-8'), bcrypt.gensalt())
-                execute_db_query("UPDATE users SET {} = %s WHERE username = %s".format(update_field), (update_val, username), one=True)
+                execute_db_query("UPDATE users SET {} = %s WHERE api_key = %s".format(update_field), (update_val, api_key), one=True)
                 return APIResponse({}, 200)
             else:
                 return APIResponse({"error": "Invalid API token."}, 401) 
@@ -168,7 +164,7 @@ class Admin(Account):
     def list_users(self):
         """ Function for an admin to get a list of all non-admin users """
         output = execute_db_query('SELECT id, username, email FROM users WHERE admin_account = 0')
-        # non-admin users exist  
+        # this user exists
         if output is not None:
             return APIResponse(output, 200)
         else:
@@ -179,18 +175,33 @@ class User(Account):
     """ Define a class for normal Users"""
     def __init__(self):
         super().__init__()
+
+
+    def get_user_info(self, seller_id):
+        """ Function to get a users email and username based on ID """
+        output = execute_db_query('SELECT username, email FROM users WHERE id = %s', (seller_id, ), one=True)
+        if output is not None:
+            return APIResponse({"seller_email": output["email"], "seller_username": output["username"]}, 200)
+        else:
+            return APIResponse({"error": "This user was not found."}, 404)
     
 
-    def add_to_watchlist(self, username, email, reference_num):
+    def add_to_watchlist(self, api_key, email, reference_num):
         """ Function for user adding an item to their watchlist """
-        execute_db_query('INSERT INTO watchlist (username, email, watchlist_item) VALUES (%s, %s, %s)', (username, email, reference_num), one=True)
-        return APIResponse({}, 200)
-    
+        # check if this user already is watching this item
+        check_duplicate = execute_db_query('SELECT * FROM watchlist WHERE watchlist_item = %s AND api_key = %s', (reference_num, api_key), one=True)
+        if not check_duplicate:
+            execute_db_query('INSERT INTO watchlist (api_key, email, watchlist_item) VALUES (%s, %s, %s)', (api_key, email, reference_num), one=True)
+            return APIResponse({}, 200)
+        else:
+            # user is already watching this item
+            return APIResponse({}, 204)
+
 
     def get_watchlist(self, reference_num):
         """ Get all users that have a specific watch reference number on their watchlist """
         output = execute_db_query('SELECT * FROM watchlist WHERE watchlist_item = %s', (reference_num,))
-        # non-admin users exist  
+        # users are watching this item/reference number
         if output is not None:
             return APIResponse(output, 200)
         else:
@@ -265,6 +276,7 @@ def validate_token():
     else:
         return ({"error": "Invalid API token."}, 401)
 
+
 @app.route('/api/accounts/login', methods=['POST'])
 def user_login():
     """ Login endpoint for users and admins"""  
@@ -307,6 +319,13 @@ def user_sign_up():
 
 
 # -------------------------------- API Account Action ROUTES ----------------------------------
+@app.route('/api/accounts/user/email/<seller_id>', methods=['GET'])
+def get_user_email(seller_id):
+    """ Get a users email address """  
+    user_account = User()
+    api_response = user_account.get_user_info(seller_id)
+    return api_response.data, api_response.status
+
 
 @app.route('/api/accounts/update', methods=['POST'])
 def update_user_info():
@@ -324,26 +343,22 @@ def update_user_info():
 @app.route('/api/accounts/user/suspend', methods=['POST'])
 def suspend_account():
     """ Suspend a user account - can only be done by a user """  
-    request_body = request.get_json()
     request_api_token = request.headers.get('Authorization')
-    username = request_body.get('username')
 
     # create User instance and suspend the user
     user = User()
-    api_response = user.suspend_account(username, request_api_token, 1)
+    api_response = user.suspend_account(request_api_token, 1)
     return api_response.data, api_response.status
 
 
 @app.route('/api/accounts/user/unsuspend', methods=['POST'])
 def unsuspend_account():
     """ Un-suspend a user account - can only be done by a user """  
-    request_body = request.get_json()
     request_api_token = request.headers.get('Authorization')
-    username = request_body.get('username')
 
     # create User instance and unsuspend the user
     user = User()
-    api_response = user.suspend_account(username, request_api_token, 0)
+    api_response = user.suspend_account(request_api_token, 0)
     return api_response.data, api_response.status
 
 
@@ -391,20 +406,12 @@ def list_blocked_users():
     return api_response.data, api_response.status
 
 
-@app.route('/api/accounts/watchlist', methods=['GET'])
-def get_watchlist_users():
+@app.route('/api/accounts/watchlist/<reference_num>', methods=['GET'])
+def get_watchlist_users(reference_num):
     """ Get all users that have this item on their watchlist """  
-    request_body = request.get_json()
-    reference_number = request_body.get('reference_num')
-
     # create User instance and get all users that are watching this reference num
     user = User()
-    api_response = user.get_watchlist(reference_number)
-    
-    # if there are users watching this reference_num, send their emails/info to Notifications service to send them an email
-    if api_response.status == 200:
-        ## post to RabbitMQ broker that there are emails watching that reference number
-        pass
+    api_response = user.get_watchlist(reference_num)
 
     return api_response.data, api_response.status
 
@@ -413,13 +420,13 @@ def get_watchlist_users():
 def add_watchlist():
     """ Add a user-watchlist combination """  
     request_body = request.get_json()
+    request_api_token = request.headers.get('Authorization')
     reference_number = request_body.get('reference_num')
-    username = request_body.get('username')
     email = request_body.get('email')
 
     # create User instance and add this user/reference number combo to watchlist data
     user = User()
-    api_response = user.add_to_watchlist(username, email, reference_number)
+    api_response = user.add_to_watchlist(request_api_token, email, reference_number)
     return api_response.data, api_response.status
 
 

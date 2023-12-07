@@ -51,10 +51,19 @@ def place_bid():
     current_bid = redis_client.hgetall(f"item:{item_id}")
     
 
-    #if current_bid and float(current_bid['bid_amount']) >= bid_amount:
-    #    return jsonify({"error": "Bid must be higher than the current bid"}), 400
-    
-    
+    #Make sure the bid is higher than the current highest bid
+    if current_bid.get('bid_amount') is not None:
+        if int(current_bid.get('bid_amount')) >= int(bid_amount):
+            return jsonify({"error": "Bid amount is too low"}), 400
+        
+
+    #Make sure the item hasn't been purchased yet
+    # Check if the item_id already exists in Redis
+    key = f"item:{item_id}:purchase_price"
+    if redis_client.exists(key):
+        return jsonify({"error": "Item has already been purchased"}), 400
+
+
     # Update highest bid
     bid_data = {
         'user_id': user_id,
@@ -68,19 +77,13 @@ def place_bid():
     if current_bid:
         redis_client.hmset(f"item:{item_id}:previoushigh", current_bid)
         
-        ##PLACEHOLDER FOR NOTIFICATIONS
-        ##IF bid is placed and previous highest bidder exists AND is not current highest bidder,
-        ##SEND data to Notifications Microservice with User_ID and email
-        if current_bid['user_id'] != bid_data['user_id']:
-            pass
-
 
     redis_client.hmset(f"item:{item_id}", bid_data)
 
     # Track user's bid history
     redis_client.lpush(f"user:{user_id}:bids", json.dumps({'item_id': item_id, 'bid_amount': bid_amount, 'timestamp': datetime.now().isoformat()}))
 
-    # Add user_id to the list of bidders for the item
+    # Add user_id / email to the list of bidders for the item
     redis_client.lpush(f"item:{item_id}:bidders", json.dumps((user_id, user_email)))
 
 
@@ -107,7 +110,8 @@ def get_bid(item_id):
         no_data = {
             'user_id': 'No bids yet',
             'username': 'No bids yet',
-            'bid_amount': 'No bids yet'
+            'bid_amount': 'No bids yet',
+            'user_email': 'No bids yet'
         }
         return jsonify(no_data), 200
 
@@ -158,6 +162,30 @@ def get_user_bids(user_id):
 
     return jsonify(bids), 200
 
+
+@app.route('/api/bidding/purchase_price/<item_id>', methods=['GET', 'POST'])
+def purchase_price(item_id):
+    if request.method == 'POST':
+        # Handle the POST request
+        data = request.json
+        purchase_price = data.get('purchase_price')
+
+        if not purchase_price:
+            return jsonify({"error": "Missing purchase price"}), 400
+
+        # Store the purchase price in Redis
+        redis_client.set(f"item:{item_id}:purchase_price", purchase_price)
+        return jsonify({"message": "Purchase price stored successfully"}), 200
+
+
+    elif request.method == 'GET':
+        # Handle the GET request
+        purchase_price = redis_client.get(f"item:{item_id}:purchase_price")
+
+        if purchase_price is None:
+            return jsonify({"error": "Purchase price not found"}), 404
+
+        return jsonify({"purchase_price": purchase_price}), 200
 
 
 

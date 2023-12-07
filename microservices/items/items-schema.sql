@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS items (
   watch_model VARCHAR(255) NOT NULL,
   watch_year YEAR NOT NULL,
   brand VARCHAR(100) NOT NULL,
-  item_image BLOB,
+  item_image LONGBLOB,
   auction_won TINYINT(1) NOT NULL,
   bid_amount INT NOT NULL,
   starting_price INT NOT NULL,
@@ -17,10 +17,18 @@ CREATE TABLE IF NOT EXISTS items (
   auction_deadline DATETIME NOT NULL
 );
 
-
 CREATE TABLE IF NOT EXISTS brands (
-  brand_id INT AUTO_INCREMENT PRIMARY KEY,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   brand_name VARCHAR(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS purchases (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  item_id INT NOT NULL,
+  status VARCHAR(20) NOT NULL,
+  purchase_date DATETIME NOT NULL,
+  purchase_amount INT NOT NULL
 );
 
 INSERT INTO brands (brand_name) VALUES
@@ -36,13 +44,3 @@ INSERT INTO brands (brand_name) VALUES
 ('Jaeger-LeCoultre'),
 ('Panerai'),
 ('Vacheron Constantin');
-
-CREATE TABLE IF NOT EXISTS user_purchases (
-  purchase_id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
-  item_id INT NOT NULL,
-  status VARCHAR(20) NOT NULL,
-  purchase_date DATETIME NOT NULL,
-  -- FOREIGN KEY (user_id) REFERENCES users(id),
-  -- FOREIGN KEY (item_id) REFERENCES items(id)
-);

@@ -21,6 +21,12 @@ start_flask "microservices/items/item_microservice.py"
 # start auction microservice
 start_flask "microservices/auction_platform/auctions.py"
 
+# start notifications microservice
+start_flask "microservices/notifications/notifications.py"
+
+# start items microservice
+start_flask "microservices/auction_platform/auto_change_auction_status.py"
+
 # Function to stop the servers
 stop_servers() {
   echo "Stopping servers..."

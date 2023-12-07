@@ -5,3 +5,4 @@ Flask-CORS==3.0.10
 redis==7.0.11
 pika==1.0.0
 requests
+apscheduler==3.10.4

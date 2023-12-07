@@ -5,6 +5,7 @@ import Items from "./Items";
 import { makeApiRequest } from "./apiUtils.js";
 import "../styles/UserHomePage.css";
 import BrandBox from "./BrandBox";
+import NavigationBar from "./NavigationBar";
 
 function UserHomePage() {
   const navigate = useNavigate();
@@ -66,8 +67,8 @@ function UserHomePage() {
 
   return (
     <div className="home-page">
-      <h1>Welcome to Timepiece Trader - USERS!</h1>
-      <button onClick={handleClick}>Create Item Auction</button>
+      <NavigationBar />
+      <h1>Welcome to Timepiece Trader!</h1>
       <div className="brands-container">
         {brands.map((brand, index) => (
           <BrandBox

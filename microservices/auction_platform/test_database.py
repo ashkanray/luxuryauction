@@ -48,7 +48,7 @@ def query_data(user_id, item_id):
 
 
 # test
-query_data(3, 9)
+# query_data(3, 9)
 
 
 def get_live_auctions():
@@ -61,8 +61,10 @@ def get_live_auctions():
     )
 
     cursor = db.cursor()
-
-    sql = "SELECT * FROM Auctions WHERE status = 'live'"
+    sql = "SELECT * FROM Auctions"
+    # sql = "SELECT * FROM Auctions WHERE status = 'pending'"
+    # sql = "SELECT * FROM Auctions WHERE status = 'live'"
+    # sql = "SELECT * FROM Auctions WHERE status = 'closed'"
 
     cursor.execute(sql)
 
@@ -75,5 +77,6 @@ def get_live_auctions():
 
     print(live_auctions)
 
+
 # test
-# get_live_auctions()
+get_live_auctions()

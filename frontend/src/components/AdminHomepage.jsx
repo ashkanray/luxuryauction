@@ -21,14 +21,24 @@ function AdminHomePage() {
     // React state for closed/live auction information for admin metrics
     const [auctionMetrics, setAuctionMetrics] = React.useState(null)
 
+    // function to log the admin out
+    const Logout = () => {
+        // Clear all items in session storage
+        sessionStorage.clear();
+        // Replace the current state in the session history
+        window.history.replaceState(null, "", "/login");
+        navigate('/login')
+    }
+
     // function to block an email addres
     async function blockUser(){
         const emailAddressInput = document.querySelector('.block-email');
         const emailAddress = emailAddressInput.value;
 
-        // do some validation on email address
-        if (!emailAddress || !/\S+@\S+\.\S+/.test(emailAddress)) {
-            alert ("The email address you're trying to block isn't a valid email address.")
+        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        // do some email validaton
+        if (!emailAddress || !emailRegex.test(emailAddress)) {
+            alert("The email address you entered isn't valid.");
             return;
         }
 
@@ -183,16 +193,10 @@ function AdminHomePage() {
 
 
 
-    // {auctionMetrics ? (
-    //     <div className="" id="closed-auction-metrics">
-    //         <metric>There have been {auctionMetrics} auctions closed in the {selectedInterval}</metric>
-    //     </div>
-    // ) : null}
-
-
     return (
         <div className="home-page">
             <h1>Administrators</h1>
+            <button id="logout-button" onClick={Logout}>Logout</button>
 
             <div className="sections">
                 <div id="manage-users-div" className="manage-div-1">

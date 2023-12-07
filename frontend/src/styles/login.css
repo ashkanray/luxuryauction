@@ -18,6 +18,12 @@
     margin-right: auto;
   }
 
+  #logo-image {
+    width: 200px; /* Set the width to your desired size */
+    height: auto; /* Maintain aspect ratio */
+    margin: 20px 20px;
+  }
+
 .register {
     display: grid !important;
     grid-template-columns: 1fr 1fr 100%;
@@ -41,6 +47,11 @@
     margin: auto;
     margin-top: 100px;
     width:375px;
+    text-align: center;
+}
+
+.accessSite span {
+  font-size: 18px;
 }
 
 .register { 
