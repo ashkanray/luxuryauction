@@ -1,7 +1,6 @@
 # timepiece-traders
 
-# To Everyone, whenever ya'll pull from origin, try running the webiste by doing:
-
+## Running the Application
 0. Run Docker Desktop App in your local machine
 1. From a fresh terminal window, access the sub-directory: timepiece-traders
 2. Run: docker-compose build
@@ -13,36 +12,20 @@
 7. Acess a browser (chrome) window, access: "http://localhost:3000"
 8. Boo-Yah!
 
-## Presentation Instructions:
-https://www.classes.cs.uchicago.edu/archive/2023/fall/51205-1/FinalTeamPresentations.html
-
 ## Project Description (Requirements)
 (https://www.classes.cs.uchicago.edu/archive/2023/fall/51205-1/AuctionSiteRequirements.html)
-
-
-## Running the Application
-TBD
-
-
-## Building the Application
-TBD
 
 
 ## Specific Microservices
 ### Accounts
 
-
 ### Auction Platform
-
 
 ### Bidding
 
-
 ### Items
 
-
 ### Message Broker
-
 
 ### Notifications
 
